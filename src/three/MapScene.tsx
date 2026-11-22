@@ -1,4 +1,4 @@
-import { Html, QuadraticBezierLine } from "@react-three/drei";
+import { QuadraticBezierLine } from "@react-three/drei";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -215,45 +215,6 @@ function Pins({
 	);
 }
 
-function Tooltip({ control }: { control: React.RefObject<MapControl> }) {
-	const ref = useRef<THREE.Group>(null);
-	const current = useRef<string | null>(null);
-	const htmlRef = useRef<HTMLDivElement>(null);
-	useFrame(() => {
-		const slug = control.current?.focus ?? null;
-		const g = ref.current;
-		if (!g) return;
-		const home = slug ? homes.find((h) => h.slug === slug) : null;
-		if (home) g.position.set(home.x, LAND_DEPTH + 0.2, -home.y);
-		if (htmlRef.current) {
-			htmlRef.current.style.opacity = home ? "1" : "0";
-			if (slug !== current.current) {
-				current.current = slug;
-				htmlRef.current.dataset.slug = slug ?? "";
-				const nameEl = htmlRef.current.querySelector("[data-name]");
-				const metaEl = htmlRef.current.querySelector("[data-meta]");
-				if (home && nameEl && metaEl) {
-					nameEl.textContent = home.name;
-					metaEl.textContent = `${home.town} · ${home.careTypes.length} kinds of care`;
-				}
-			}
-		}
-	});
-	return (
-		<group ref={ref}>
-			<Html center zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
-				<div
-					ref={htmlRef}
-					className="w-max -translate-y-6 whitespace-nowrap rounded-2xl bg-ink px-4 py-2.5 text-paper opacity-0 shadow-[0_14px_40px_-14px_rgb(0_0_0/0.55)] transition-opacity duration-150"
-				>
-					<p data-name className="type-label" />
-					<p data-meta className="text-[0.875rem] text-paper/75" />
-				</div>
-			</Html>
-		</group>
-	);
-}
-
 function PlaceMarker({ place, nearest }: { place: MapControl["place"]; nearest: string[] }) {
 	const ring = useRef<THREE.Mesh>(null);
 	const pos = place ? project(place.lat, place.lng) : null;
@@ -278,11 +239,6 @@ function PlaceMarker({ place, nearest }: { place: MapControl["place"]; nearest: 
 					<ringGeometry args={[0.05, 0.065, 48]} />
 					<meshBasicMaterial color="#2b2321" transparent opacity={0.5} toneMapped={false} />
 				</mesh>
-				<Html center position={[0, 0.16, 0]} zIndexRange={[19, 0]} style={{ pointerEvents: "none" }}>
-					<div className="w-max whitespace-nowrap rounded-full bg-paper px-3 py-1.5 text-[0.875rem] font-semibold text-ink shadow-[0_0_0_1px_rgb(43_35_33/0.1),0_8px_24px_-10px_rgb(43_35_33/0.4)]">
-						{place?.label}
-					</div>
-				</Html>
 			</group>
 			{near.map((h) => {
 				const to: [number, number, number] = [h.x, LAND_DEPTH + 0.06, -h.y];
@@ -305,38 +261,57 @@ const CITIES: [string, number, number][] = [
 	["London", 51.507, -0.128],
 ];
 
-/** A few cities for bearings. They fade with distance so the close-ups stay clean. */
-function Cities() {
-	const refs = useRef<(HTMLSpanElement | null)[]>([]);
+/** DOM labels that live beside the canvas (not portalled into it). Positions are projected every frame. */
+type LabelRefs = {
+	cities: React.RefObject<(HTMLSpanElement | null)[]>;
+	tip: React.RefObject<HTMLDivElement | null>;
+	place: React.RefObject<HTMLDivElement | null>;
+};
+
+function Labels({ control, refs, place }: { control: React.RefObject<MapControl>; refs: LabelRefs; place: MapControl["place"] }) {
 	const v = useMemo(() => new THREE.Vector3(), []);
-	useFrame(({ camera }) => {
+	const shown = useRef<string | null>(null);
+	useFrame(({ camera, size }) => {
+		const put = (el: HTMLElement | null, x: number, y: number, z: number, dy: number) => {
+			if (!el) return false;
+			v.set(x, y, z).project(camera);
+			const visible = v.z < 1 && v.x > -1.2 && v.x < 1.2 && v.y > -1.2 && v.y < 1.2;
+			el.style.transform = `translate3d(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height + dy}px, 0) translate(-50%, -50%)`;
+			return visible;
+		};
 		CITIES.forEach(([, lat, lng], i) => {
-			const el = refs.current[i];
-			if (!el) return;
+			const el = refs.cities.current?.[i] ?? null;
 			const [x, y] = project(lat, lng);
-			const d = camera.position.distanceTo(v.set(x, 0, -y));
-			el.style.opacity = String(THREE.MathUtils.clamp((d - 2.2) / 1.6, 0, 1) * THREE.MathUtils.clamp((11 - d) / 3, 0, 1));
+			const ok = put(el, x, LAND_DEPTH, -y, 14);
+			if (el) {
+				const d = camera.position.distanceTo(v.set(x, 0, -y));
+				el.style.opacity = ok ? String(THREE.MathUtils.clamp((d - 2.2) / 1.6, 0, 1) * THREE.MathUtils.clamp((11 - d) / 3, 0, 1)) : "0";
+			}
 		});
+		const slug = control.current?.focus ?? null;
+		const home = slug ? homes.find((h) => h.slug === slug) : null;
+		const tip = refs.tip.current;
+		if (tip) {
+			if (home) put(tip, home.x, LAND_DEPTH + 0.2, -home.y, -22);
+			tip.style.opacity = home ? "1" : "0";
+			if (slug !== shown.current && home) {
+				shown.current = slug;
+				const nameEl = tip.querySelector("[data-name]");
+				const metaEl = tip.querySelector("[data-meta]");
+				if (nameEl) nameEl.textContent = home.name;
+				if (metaEl) metaEl.textContent = `${home.town} · ${home.careTypes.length} kinds of care`;
+			}
+		}
+		const pl = refs.place.current;
+		if (pl) {
+			if (place) {
+				const [x, y] = project(place.lat, place.lng);
+				put(pl, x, LAND_DEPTH + 0.16, -y, 0);
+			}
+			pl.style.opacity = place ? "1" : "0";
+		}
 	});
-	return (
-		<>
-			{CITIES.map(([name, lat, lng], i) => {
-				const [x, y] = project(lat, lng);
-				return (
-					<Html key={name} position={[x, LAND_DEPTH + 0.005, -y]} center zIndexRange={[10, 0]} style={{ pointerEvents: "none" }}>
-						<span
-							ref={(el) => {
-								refs.current[i] = el;
-							}}
-							className="block w-max translate-y-3 whitespace-nowrap text-[0.8125rem] font-semibold tracking-[0.01em] text-stone/80"
-						>
-							{name}
-						</span>
-					</Html>
-				);
-			})}
-		</>
-	);
+	return null;
 }
 
 function CameraRig({ control }: { control: React.RefObject<MapControl> }) {
@@ -389,6 +364,10 @@ export default function MapScene({
 	eventSource?: React.RefObject<HTMLElement | null>;
 }) {
 	const { ref, frameloop } = useFrameloopInView<HTMLDivElement>();
+	const cityEls = useRef<(HTMLSpanElement | null)[]>([]);
+	const tipEl = useRef<HTMLDivElement>(null);
+	const placeEl = useRef<HTMLDivElement>(null);
+	const labelRefs = useMemo<LabelRefs>(() => ({ cities: cityEls, tip: tipEl, place: placeEl }), []);
 	return (
 		<div ref={ref} className="absolute inset-0">
 			<Canvas
@@ -426,10 +405,35 @@ export default function MapScene({
 				<Land />
 				<Pins control={control} onHover={onHover} onSelect={onSelect} />
 				<PlaceMarker place={place} nearest={nearest} />
-				<Cities />
-				<Tooltip control={control} />
+				<Labels control={control} refs={labelRefs} place={place} />
 				<CameraRig control={control} />
 			</Canvas>
+			<div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+				{CITIES.map(([name], i) => (
+					<span
+						key={name}
+						ref={(el) => {
+							cityEls.current[i] = el;
+						}}
+						className="absolute left-0 top-0 w-max whitespace-nowrap text-[0.8125rem] font-semibold tracking-[0.01em] text-stone/80 opacity-0"
+					>
+						{name}
+					</span>
+				))}
+				<div
+					ref={placeEl}
+					className="absolute left-0 top-0 w-max whitespace-nowrap rounded-full bg-paper px-3 py-1.5 text-[0.875rem] font-semibold text-ink opacity-0 shadow-[0_0_0_1px_rgb(43_35_33/0.1),0_8px_24px_-10px_rgb(43_35_33/0.4)]"
+				>
+					{place?.label}
+				</div>
+				<div
+					ref={tipEl}
+					className="absolute left-0 top-0 w-max whitespace-nowrap rounded-2xl bg-ink px-4 py-2.5 text-paper opacity-0 shadow-[0_14px_40px_-14px_rgb(0_0_0/0.55)] transition-opacity duration-150"
+				>
+					<p data-name className="type-label" />
+					<p data-meta className="text-[0.875rem] text-paper/75" />
+				</div>
+			</div>
 		</div>
 	);
 }
