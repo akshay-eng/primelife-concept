@@ -1,0 +1,112 @@
+{
+ "stats": {
+  "homes": 63,
+  "places": 1835,
+  "placesKnownFor": 56,
+  "careTypes": 15,
+  "regions": 8,
+  "founded": 1984
+ },
+ "careTypes": [
+  {
+   "name": "Physical Disability",
+   "count": 40
+  },
+  {
+   "name": "Respite Care",
+   "count": 31
+  },
+  {
+   "name": "Mental Disability",
+   "count": 28
+  },
+  {
+   "name": "Dementia Care",
+   "count": 28
+  },
+  {
+   "name": "Day Care",
+   "count": 27
+  },
+  {
+   "name": "Learning Disability",
+   "count": 26
+  },
+  {
+   "name": "Elderly Care",
+   "count": 26
+  },
+  {
+   "name": "Mental Health Needs",
+   "count": 22
+  },
+  {
+   "name": "Reablement and Active Recovery",
+   "count": 21
+  },
+  {
+   "name": "Nursing Care",
+   "count": 11
+  },
+  {
+   "name": "Supported Living",
+   "count": 7
+  },
+  {
+   "name": "Rehabilitative Services",
+   "count": 7
+  },
+  {
+   "name": "Sensory Impairment",
+   "count": 5
+  },
+  {
+   "name": "Palliative Care",
+   "count": 4
+  },
+  {
+   "name": "Domiciliary Care",
+   "count": 1
+  }
+ ],
+ "regions": [
+  {
+   "name": "Lincolnshire",
+   "count": 21
+  },
+  {
+   "name": "Leicestershire & Rutland",
+   "count": 20
+  },
+  {
+   "name": "Nottinghamshire & Derbyshire",
+   "count": 6
+  },
+  {
+   "name": "Warwickshire & West Midlands",
+   "count": 6
+  },
+  {
+   "name": "Norfolk",
+   "count": 4
+  },
+  {
+   "name": "Lancashire",
+   "count": 3
+  },
+  {
+   "name": "East Yorkshire",
+   "count": 2
+  },
+  {
+   "name": "Bristol",
+   "count": 1
+  }
+ ],
+ "awards": {
+  "title": "Pride of Prime Life Awards!",
+  "date": "2026-11-19",
+  "link": "https://prime-life.co.uk/pride-of-prime-life-awards/",
+  "text": "We are thrilled to announce that this February, we will be hosting the inaugural Pride of Prime Life Awards! This exciting event is designed to honour and celebrate the incredible individuals who make up the Prime Life team, recognising their hard work, dedication, and remarkable achievements throughout the year. Over the past few months, we have reached out to our employees, inviting team members to submit nominations across a variety of categories. The response has been truly overwhelming, with an outstanding number of inspiring entries that showcase the exceptional talents and contributions of our colleagues. As we build up to the award ceremony, we cannot wait to spotlight the nominees for each category. In the coming weeks, we will share their remarkable stories, highlighting not only their professional accomplishments but also the personal journeys that led to their nominations. Furthermore, we will feature other heartfelt stories that exemplify the spirit and camaraderie within our Prime Life family. We hope you will enjoy reading about the incredible people who make Prime Life a truly special place!"
+ }
+}
