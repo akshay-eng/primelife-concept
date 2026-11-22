@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5320 --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build && cp dist/index.html dist/404.html",
+    "build": "tsc --noEmit && vite build && node scripts/spa-routes.mjs",
     "preview": "vite preview --port 5321 --host 127.0.0.1",
     "check": "tsc --noEmit",
     "data": "node scripts/build-data.mjs"
